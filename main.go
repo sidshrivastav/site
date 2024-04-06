@@ -1,35 +1,49 @@
 package main
 
 import (
-        "fmt"
-        "log"
-        "net/http"
-        "os"
+	"fmt"
+	"html/template"
+	"log"
+	"net/http"
+  "path/filepath"
 )
 
+// Template directory
+var templatesDir = "templates"
+
+// Data structure for home
+type HomeData struct {
+    LuckyNumber int
+}
+
 func main() {
-        log.Print("starting server...")
-        http.HandleFunc("/", handler)
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		// Parse the home template file
+		tmpl, err := template.ParseFiles(filepath.Join(templatesDir, "layout.html"))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 
-        // Determine port for HTTP service.
-        port := os.Getenv("PORT")
-        if port == "" {
-                port = "8080"
-                log.Printf("defaulting to port %s", port)
-        }
+    // Data to show
+		data := HomeData{
+      LuckyNumber: 1,
+		}
 
-        // Start HTTP server.
-        log.Printf("listening on port %s", port)
-        if err := http.ListenAndServe(":"+port, nil); err != nil {
-                log.Fatal(err)
-        }
+		// Execute the home template, passing in the home data
+		err = tmpl.Execute(w, data)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	})
+
+  // Serve Static File
+	fs := http.FileServer(http.Dir("static/"))
+	http.Handle("/static/", http.StripPrefix("/static/", fs))
+
+	fmt.Printf("Starting server at port 8080\n")
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		log.Fatal(err)
+	}
 }
-
-func handler(w http.ResponseWriter, r *http.Request) {
-        name := os.Getenv("NAME")
-        if name == "" {
-                name = "World"
-        }
-        fmt.Fprintf(w, "Hello %s!\n", name)
-}
-

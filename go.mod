@@ -1,3 +1,3 @@
-module github.com/GoogleCloudPlatform/golang-samples/run/helloworld
+module github.com/sidshrivastav/site
 
-go 1.21.6
+go 1.22.2
